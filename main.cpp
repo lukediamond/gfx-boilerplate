@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 
 #include "image.hpp"
+#include "shader.hpp"
 
 struct ProgramState {
     bool running = true;
