@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
 
+#include "image.hpp"
+
 struct ProgramState {
     bool running = true;
 };
