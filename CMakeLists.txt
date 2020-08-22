@@ -4,9 +4,10 @@ set(CMAKE_CXX_FLAGS "--std=c++1z -fno-exceptions -m64")
 
 add_executable(runtime
     main.cpp
-    shader.cpp
+    gl_shader.cpp
+    gl_prim.cpp
+    gl_texture.cpp
     image.cpp
-    prim.cpp
     stb_impl.cpp
 )
 target_link_libraries(runtime

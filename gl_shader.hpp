@@ -72,20 +72,3 @@ template <typename T, typename... Args>
 inline void GL_PassUniform(GLint loc, T first, Args... rest) {
     GL_VecUniformArgs<sizeof...(Args) + 1, T>(loc, first, (T) rest...);
 }
-
-struct GL_Uniform {
-    GLint loc;
-
-    inline GL_Uniform(GLuint program, const char* location) {
-        loc = glGetUniformLocation(program, location);
-    }
-
-    template <typename T>
-    inline void operator=(const T& val) {
-        GL_PassUniform(loc, val);
-    }
-
-    inline operator GLint() const {
-        return loc;
-    }
-};

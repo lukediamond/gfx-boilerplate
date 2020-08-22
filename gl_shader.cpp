@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "shader.hpp"
+#include "gl_shader.hpp"
 
 GLuint GL_CreateShader(const char* src, GLenum type) {
     GLuint shader = glCreateShader(type);

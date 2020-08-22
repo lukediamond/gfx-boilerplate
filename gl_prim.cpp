@@ -1,4 +1,4 @@
-#include "prim.hpp"
+#include "gl_prim.hpp"
 
 const GLfloat kQuadVerts[] = {
     -1.0f, -1.0f, 0.0f, 0.0f,
@@ -18,8 +18,12 @@ Primative GL_CreateQuad() {
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, prim.vbo);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, GL_Offset(sizeof(GLfloat) * 0));
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 4, GL_Offset(sizeof(GLfloat) * 2));
+    glVertexAttribPointer(
+        0, 2, GL_FLOAT, GL_FALSE, 
+        sizeof(GLfloat) * 4, GL_Offset(sizeof(GLfloat) * 0));
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, GL_FALSE, 
+        sizeof(GLfloat) * 4, GL_Offset(sizeof(GLfloat) * 2));
     glBufferData(GL_ARRAY_BUFFER, sizeof(kQuadVerts), kQuadVerts, GL_STATIC_DRAW);
 
     prim.elements = 6;

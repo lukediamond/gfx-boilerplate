@@ -1,20 +1,15 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <cmath>
-#include <sys/time.h>
 
 #include <SDL2/SDL.h>
 #include "wrapped_gl.h"
 
 #include "image.hpp"
-#include "shader.hpp"
-#include "prim.hpp"
-
-static double GetTime() {
-    timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (double) (ts.tv_sec + ts.tv_nsec * 1.0e-9);
-}
+#include "gl_shader.hpp"
+#include "gl_prim.hpp"
+#include "gl_texture.hpp"
 
 struct ProgramState {
     bool running = true;
@@ -48,31 +43,32 @@ int main(int, char**) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
-    SDL_Window* window = 
-        SDL_CreateWindow("", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
-                         1280, 720, SDL_WINDOW_OPENGL);
+    SDL_Window* window = SDL_CreateWindow(
+        "", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+        1280, 720, SDL_WINDOW_OPENGL);
     SDL_GLContext glctx = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, glctx);
-    glewExperimental = GL_TRUE;
     glewInit();
     SDL_GL_SetSwapInterval(1);
 
     ProgramState state;
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
-        double start = GetTime();
+        auto start = std::chrono::high_resolution_clock::now();
         for (SDL_Event e; SDL_PollEvent(&e); HandleSDLEvent(state, e));
 
         glClear(GL_COLOR_BUFFER_BIT);
 
         SDL_GL_SwapWindow(window);
 
-        double end = GetTime();
-        state.delta = end - start;
-        state.elapsed += state.delta;
+        auto end = std::chrono::high_resolution_clock::now();
+        {
+            std::chrono::duration<double> dur = end - start;
+            state.delta = dur.count();
+            state.elapsed += state.delta;
+        }
     }
-
 
     SDL_DestroyWindow(window);
     SDL_Quit();
