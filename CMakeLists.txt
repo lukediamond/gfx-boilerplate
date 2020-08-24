@@ -8,10 +8,15 @@ add_executable(runtime
     gl_prim.cpp
     gl_texture.cpp
     image.cpp
+    text.cpp
     stb_impl.cpp
 )
 target_link_libraries(runtime
     SDL2
     GLEW
     GL
+    freetype
+)
+target_include_directories(runtime PRIVATE
+    /usr/include/freetype2
 )

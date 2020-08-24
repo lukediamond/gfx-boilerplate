@@ -4,9 +4,12 @@
 #include <cmath>
 
 #include <SDL2/SDL.h>
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #include "wrapped_gl.h"
 
 #include "image.hpp"
+#include "text.hpp"
 #include "gl_shader.hpp"
 #include "gl_prim.hpp"
 #include "gl_texture.hpp"
@@ -53,6 +56,17 @@ int main(int, char**) {
 
     ProgramState state;
 
+    FT_Library freetype;
+    FT_Init_FreeType(&freetype);
+
+    FT_Face face;
+    FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
+
+    GlyphAtlas atlas = Text_CreateAtlas(face, 16, 0x00, 0xff);
+
+    Text_DestroyAtlas(atlas);
+    FT_Done_Face(face);
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -69,6 +83,8 @@ int main(int, char**) {
             state.elapsed += state.delta;
         }
     }
+
+    FT_Done_FreeType(freetype);
 
     SDL_DestroyWindow(window);
     SDL_Quit();

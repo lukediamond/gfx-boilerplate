@@ -30,6 +30,26 @@ Image Image_Load(const char* path, int channels, Image::Format fmt) {
     return img;
 }
 
+Image Image_Create(uint32_t width, uint32_t height, int channels, Image::Format fmt) {
+    Image img;
+    int compsz = Image_CompSize(fmt);
+    img.width = width;
+    img.height = height;
+    img.pitch = width * compsz * channels;
+    img.channels = channels;
+    img.format = fmt;
+    switch (fmt) {
+        case Image::F_U8:
+            img.data = malloc(img.pitch * img.height);
+            break;
+        case Image::F_F32:
+            img.data = malloc(img.pitch * img.height);
+            break;
+    }
+
+    return img;
+}
+
 void Image_Free(Image& img) {
     free(img.data);
 }
