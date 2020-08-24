@@ -39,14 +39,7 @@ Image Image_Create(uint32_t width, uint32_t height, int channels, Image::Format 
     img.pitch = width * compsz * channels;
     img.channels = channels;
     img.format = fmt;
-    switch (fmt) {
-        case Image::F_U8:
-            img.data = malloc(img.pitch * img.height);
-            break;
-        case Image::F_F32:
-            img.data = malloc(img.pitch * img.height);
-            break;
-    }
+    img.data = malloc(img.pitch * img.height);
 
     return img;
 }

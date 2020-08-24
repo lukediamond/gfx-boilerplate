@@ -17,8 +17,9 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
     atlas.first = first;
     atlas.num = num;
     atlas.size = size;
-    atlas.padding = 0;
+    atlas.padding = padding;
     atlas.charsPerRow = charsPerRow;
+    atlas.metrics = new GlyphMetrics[num] {};
 
     Image& img = atlas.atlas;
     uint8_t* imgbuf = (uint8_t*) img.data;
@@ -28,6 +29,12 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
         uint32_t charidx = first + i;
         FT_Load_Glyph(face, FT_Get_Char_Index(face, charidx), FT_LOAD_DEFAULT);
         FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+
+        const FT_Glyph_Metrics& ftmetrics = face->glyph->metrics;
+        GlyphMetrics& metrics = atlas.metrics[i];
+        metrics.advanceX = ftmetrics.horiAdvance / 64;
+        metrics.bearingX = ftmetrics.horiBearingX / 64;
+        metrics.bearingY = ftmetrics.horiBearingY / 64;
 
         const FT_Bitmap& bmp = face->glyph->bitmap;
         glm::ivec2 dstpos;
@@ -47,6 +54,7 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
 
 void Text_DestroyAtlas(GlyphAtlas& atlas) {
     Image_Free(atlas.atlas);
+    delete[] atlas.metrics;
 }
 
 void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, glm::ivec2& pos) {

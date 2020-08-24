@@ -13,5 +13,6 @@ uniform vec2 u_res;
 
 void main() {
     pass_coord = mix(u_tl, u_br, vec2(in_coord.x, 1.0 - in_coord.y));
-    gl_Position = vec4((in_pos * u_size + u_pos) / u_res, 0.0, 1.0);
+    vec2 pos = in_pos * 0.5 + 0.5;
+    gl_Position = vec4(2.0 * (pos * u_size + u_pos) / u_res, 0.0, 1.0);
 }

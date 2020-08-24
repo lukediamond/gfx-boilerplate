@@ -6,8 +6,15 @@
 #include FT_FREETYPE_H
 #include <glm/vec2.hpp>
 
+struct GlyphMetrics {
+    int16_t advanceX;
+    int16_t bearingX;
+    int16_t bearingY;
+};
+
 struct GlyphAtlas {
     Image atlas {};
+    GlyphMetrics* metrics;
     int padding {};
     int size {};
     uint32_t first {};

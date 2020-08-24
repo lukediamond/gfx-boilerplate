@@ -62,7 +62,7 @@ int main(int, char**) {
     FT_Face face;
     FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
 
-    GlyphAtlas atlas = Text_CreateAtlas(face, 32, 0x00, 0xff);
+    GlyphAtlas atlas = Text_CreateAtlas(face, 32, 0x00, 0xff, 2);
 
     glm::vec2 tl, br;
     Text_GetDrawPos(atlas, 1, tl, br);
@@ -83,6 +83,8 @@ int main(int, char**) {
     GLuint tex = GL_CreateTexture(atlas.atlas);
     GL_TextureFilter(tex, GL_NEAREST, GL_NEAREST);
 
+    std::string str = "hello world";
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -90,20 +92,29 @@ int main(int, char**) {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glm::vec2 tl, br;
-        Text_GetDrawPos(atlas, 'W', tl, br);
 
-        glUseProgram(quadprog);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex);
-        GL_PassUniform(quadprog_image, 0);
-        GL_PassUniform(quadprog_tl, tl);
-        GL_PassUniform(quadprog_br, br);
-        GL_PassUniform(quadprog_pos, 0.0f, 0.0f);
-        GL_PassUniform(quadprog_size, 64.0f, 64.0f);
-        GL_PassUniform(quadprog_res, 1280.0f, 720.0f);
-        glBindVertexArray(quad.vao);
-        quad.Draw();
+        float x = 0.0f;
+        float y = 0.0f;
+        for (char c : str) {
+            glm::vec2 tl, br;
+            Text_GetDrawPos(atlas, c - atlas.first, tl, br);
+            const GlyphMetrics& met = atlas.metrics[c - atlas.first];
+
+            glUseProgram(quadprog);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, tex);
+            GL_PassUniform(quadprog_image, 0);
+            GL_PassUniform(quadprog_tl, tl);
+            GL_PassUniform(quadprog_br, br);
+            GL_PassUniform(quadprog_pos, x, y + met.bearingY);
+            GL_PassUniform(quadprog_size, 32.0f, 32.0f);
+            GL_PassUniform(quadprog_res, 1280.0f, 720.0f);
+            glBindVertexArray(quad.vao);
+            quad.Draw();
+
+            x += met.advanceX;
+        }
+
 
         SDL_GL_SwapWindow(window);
 
@@ -116,10 +127,11 @@ int main(int, char**) {
     }
 
     glDeleteProgram(quadprog);
+    glDeleteTextures(1, &tex);
     GL_DestroyPrimative(quad);
+    FT_Done_Face(face);
     FT_Done_FreeType(freetype);
     Text_DestroyAtlas(atlas);
-    FT_Done_Face(face);
 
     SDL_DestroyWindow(window);
     SDL_Quit();
