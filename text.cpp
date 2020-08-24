@@ -33,6 +33,7 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
         const FT_Glyph_Metrics& ftmetrics = face->glyph->metrics;
         GlyphMetrics& metrics = atlas.metrics[i];
         metrics.advanceX = ftmetrics.horiAdvance / 64;
+        metrics.advanceY = ftmetrics.vertAdvance / 64;
         metrics.bearingX = ftmetrics.horiBearingX / 64;
         metrics.bearingY = ftmetrics.horiBearingY / 64;
 

@@ -10,9 +10,11 @@
 
 #include "image.hpp"
 #include "text.hpp"
+#include "fileio.hpp"
 #include "gl_shader.hpp"
 #include "gl_prim.hpp"
 #include "gl_texture.hpp"
+#include "gl_text.hpp"
 
 struct ProgramState {
     bool running = true;
@@ -26,18 +28,6 @@ static void HandleSDLEvent(ProgramState& ctx, SDL_Event& e) {
             ctx.running = false;
             break;
     }
-}
-
-inline std::string ReadEntireFile(const char* path) {
-    std::ifstream stream(path);
-    if (!stream.is_open()) return "";
-    stream.seekg(0, std::ios::end);
-    size_t sz = stream.tellg();
-    stream.seekg(0);
-    std::string data(sz, 0);
-    stream.read(&data[0], sz);
-    stream.close();
-    return data;
 }
 
 int main(int, char**) {
@@ -62,29 +52,14 @@ int main(int, char**) {
     FT_Face face;
     FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
 
-    GlyphAtlas atlas = Text_CreateAtlas(face, 32, 0x00, 0xff, 2);
+    GL_FontContext fontctx = GL_CreateFontContext(face, 32);
 
-    glm::vec2 tl, br;
-    Text_GetDrawPos(atlas, 1, tl, br);
+    std::string str = "hello world\nnewline";
+    auto gstr = GL_GetGlyphString(fontctx, str);
 
-
-    Primative quad = GL_CreateQuad();
-
-    GLuint quadprog = GL_CreateProgram(
-        ReadEntireFile("../shaders/quad.vert").c_str(), 
-        ReadEntireFile("../shaders/quad.frag").c_str());
-    GLint quadprog_image = glGetUniformLocation(quadprog, "u_image");
-    GLint quadprog_tl = glGetUniformLocation(quadprog, "u_tl");
-    GLint quadprog_br = glGetUniformLocation(quadprog, "u_br");
-    GLint quadprog_pos = glGetUniformLocation(quadprog, "u_pos");
-    GLint quadprog_size = glGetUniformLocation(quadprog, "u_size");
-    GLint quadprog_res = glGetUniformLocation(quadprog, "u_res");
-
-    GLuint tex = GL_CreateTexture(atlas.atlas);
-    GL_TextureFilter(tex, GL_NEAREST, GL_NEAREST);
-
-    std::string str = "hello world";
-
+    GL_TextRenderer tr = GL_CreateTextRenderer();
+    tr.res = {1280.0f, 720.0f};
+    
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -92,29 +67,7 @@ int main(int, char**) {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
-
-        float x = 0.0f;
-        float y = 0.0f;
-        for (char c : str) {
-            glm::vec2 tl, br;
-            Text_GetDrawPos(atlas, c - atlas.first, tl, br);
-            const GlyphMetrics& met = atlas.metrics[c - atlas.first];
-
-            glUseProgram(quadprog);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, tex);
-            GL_PassUniform(quadprog_image, 0);
-            GL_PassUniform(quadprog_tl, tl);
-            GL_PassUniform(quadprog_br, br);
-            GL_PassUniform(quadprog_pos, x, y + met.bearingY);
-            GL_PassUniform(quadprog_size, 32.0f, 32.0f);
-            GL_PassUniform(quadprog_res, 1280.0f, 720.0f);
-            glBindVertexArray(quad.vao);
-            quad.Draw();
-
-            x += met.advanceX;
-        }
-
+        GL_DrawString(tr, gstr, {0.0f, 0.0f}, 32.0f);
 
         SDL_GL_SwapWindow(window);
 
@@ -126,12 +79,10 @@ int main(int, char**) {
         }
     }
 
-    glDeleteProgram(quadprog);
-    glDeleteTextures(1, &tex);
-    GL_DestroyPrimative(quad);
+    GL_DestroyTextRenderer(tr);
+    GL_DestroyFontContext(fontctx);
     FT_Done_Face(face);
     FT_Done_FreeType(freetype);
-    Text_DestroyAtlas(atlas);
 
     SDL_DestroyWindow(window);
     SDL_Quit();

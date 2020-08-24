@@ -7,6 +7,7 @@ add_executable(runtime
     gl_shader.cpp
     gl_prim.cpp
     gl_texture.cpp
+    gl_text.cpp
     image.cpp
     text.cpp
     stb_impl.cpp

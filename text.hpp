@@ -8,6 +8,7 @@
 
 struct GlyphMetrics {
     int16_t advanceX;
+    int16_t advanceY;
     int16_t bearingX;
     int16_t bearingY;
 };
