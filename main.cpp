@@ -16,6 +16,8 @@
 #include "gl_texture.hpp"
 #include "gl_text.hpp"
 
+#include "utf8_decode.hpp"
+
 struct ProgramState {
     bool running = true;
     double delta = 0.0;
@@ -54,12 +56,12 @@ int main(int, char**) {
 
     GL_FontContext fontctx = GL_CreateFontContext(face, 32);
 
-    std::string str = "hello world\nnewline";
+    std::string str = u8"hello world";
     auto gstr = GL_GetGlyphString(fontctx, str);
 
     GL_TextRenderer tr = GL_CreateTextRenderer();
     tr.res = {1280.0f, 720.0f};
-    
+
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();

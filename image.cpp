@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "image.hpp"
 #include "stb_image_write.h"
 
@@ -39,7 +41,7 @@ Image Image_Create(uint32_t width, uint32_t height, int channels, Image::Format 
     img.pitch = width * compsz * channels;
     img.channels = channels;
     img.format = fmt;
-    img.data = malloc(img.pitch * img.height);
+    img.data = calloc(img.pitch * img.height, 1);
 
     return img;
 }

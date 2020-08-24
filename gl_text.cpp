@@ -1,6 +1,7 @@
 #include "gl_text.hpp"
 #include "gl_shader.hpp"
 #include "fileio.hpp"
+#include "utf8_decode.hpp"
 
 #include "wrapped_gl.h"
 
@@ -8,7 +9,7 @@
 
 GL_GlyphAtlas GL_CreateGlyphAtlas(FT_Face face, int size, uint32_t codept) {
     GL_GlyphAtlas atlas;
-    atlas.atlas = Text_CreateAtlas(face, size, codept, 0xff, 2);
+    atlas.atlas = Text_CreateAtlas(face, size, codept, 0xff, 4);
     atlas.tex = GL_CreateTexture(atlas.atlas.atlas);
     GL_TextureFilter(atlas.tex, GL_NEAREST, GL_NEAREST);
 
@@ -23,8 +24,6 @@ void GL_DestroyGlyphAtlas(GL_GlyphAtlas& atlas) {
 // GL_FontContext
 
 GL_Glyph GL_GetGlyph(GL_FontContext& ctx, uint32_t codept) {
-    GL_Glyph glyph;
-
     // find atlas
     int atlasidx = -1;
     for (int i = 0; i < ctx.atlases.size(); ++i) {
@@ -36,23 +35,30 @@ GL_Glyph GL_GetGlyph(GL_FontContext& ctx, uint32_t codept) {
     }
     // create if absent
     if (atlasidx < 0) {
-        ctx.atlases.push_back(GL_CreateGlyphAtlas(ctx.face, ctx.size, codept & ~0xff));
+        printf("adding code point 0x%x\n", codept & ~0xff);
+        ctx.atlases.push_back(GL_CreateGlyphAtlas(ctx.face, ctx.size, codept & ~(uint32_t) 0xff));
         atlasidx = ctx.atlases.size() - 1;
     }
 
     // populate glyph
+    GL_Glyph glyph;
     const auto& atlas = ctx.atlases[atlasidx];
+    uint32_t codeidx = codept - atlas.atlas.first;
     glyph.atlas = atlas.tex;
-    Text_GetDrawPos(atlas.atlas, codept, glyph.tl, glyph.br);
-    glyph.metrics = atlas.atlas.metrics[codept - atlas.atlas.first];
+    Text_GetDrawPos(atlas.atlas, codeidx, glyph.tl, glyph.br);
+    glyph.metrics = atlas.atlas.metrics[codeidx];
 
     return glyph;
 }
 
 std::vector<GL_Glyph> GL_GetGlyphString(GL_FontContext& ctx, std::string str) {
     std::vector<GL_Glyph> glyphs;
-    for (auto c : str)
-        glyphs.push_back(GL_GetGlyph(ctx, c));
+    size_t i = 0;
+    while (i < str.size()) {
+        auto codept = UTF8_NextCodePoint(str.data(), &i, str.size());
+        if (codept == UTF8_INVALID_CHAR) continue;
+        glyphs.push_back(GL_GetGlyph(ctx, codept));
+    }
     return glyphs;
 }
 

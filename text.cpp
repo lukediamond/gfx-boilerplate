@@ -45,10 +45,12 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
         for (int y = 0; y < bmp.rows; ++y) {
             int ypos = y + dstpos.y;
             for (int x = 0; x < bmp.width; ++x) {
-                imgbuf[ypos * img.pitch + x + dstpos.x] = bmp.buffer[y * bmp.pitch + x];
+                imgbuf[ypos * img.pitch + dstpos.x + x] = bmp.buffer[y * bmp.pitch + x];
             }
         }
     }
+
+    Image_WriteBMP(atlas.atlas, "out.bmp");
 
     return atlas;
 }
@@ -64,9 +66,9 @@ void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, glm::ivec2& pos) {
 }
 
 void Text_GetDrawPos(const GlyphAtlas& atlas, uint32_t i, glm::vec2& tl, glm::vec2& br) {
-    glm::ivec2 pos;
     // assumes square image
+    glm::ivec2 pos;
     Text_GetPos(atlas, i, pos);
-    tl = (glm::vec2) pos * (float) (atlas.size + atlas.padding) / (float) atlas.atlas.width;
+    tl = glm::vec2 {pos * (atlas.size + atlas.padding)} / (float) atlas.atlas.width;
     br = tl + glm::vec2 {(float) atlas.size / (float) atlas.atlas.width};
 }
