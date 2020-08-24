@@ -20,4 +20,5 @@ struct Image {
 int Image_CompSize(Image::Format fmt);
 Image Image_Load(const char* path, int channels, Image::Format fmt = Image::F_U8);
 Image Image_Create(uint32_t width, uint32_t height, int channels, Image::Format fmt = Image::F_U8);
+void Image_WriteBMP(const Image& img, const char* path);
 void Image_Free(Image& img);

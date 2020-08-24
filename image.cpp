@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include "stb_image_write.h"
 
 int Image_CompSize(Image::Format fmt) {
     switch (fmt) {
@@ -48,6 +49,10 @@ Image Image_Create(uint32_t width, uint32_t height, int channels, Image::Format 
     }
 
     return img;
+}
+
+void Image_WriteBMP(const Image& img, const char* path) {
+    stbi_write_bmp(path, img.width, img.height, img.channels, img.data);
 }
 
 void Image_Free(Image& img) {

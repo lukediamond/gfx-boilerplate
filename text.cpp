@@ -9,16 +9,15 @@ static uint32_t NearestPowerOf2(uint32_t x) {
 }
 
 GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t num, int padding) {
-    int pixelsTotal = (size + padding) * num;
     int charsPerRow = (int) ceil(sqrt(num));
     uint32_t width = NearestPowerOf2(charsPerRow * (size + padding));
-
 
     GlyphAtlas atlas;
     atlas.atlas = Image_Create(width, width, 1);
     atlas.first = first;
     atlas.num = num;
     atlas.size = size;
+    atlas.padding = 0;
     atlas.charsPerRow = charsPerRow;
 
     Image& img = atlas.atlas;
@@ -31,16 +30,14 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
         FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
 
         const FT_Bitmap& bmp = face->glyph->bitmap;
-        uint16_t dstX, dstY;
-        Text_GetPos(atlas, i, &dstX, &dstY);
-        dstX *= (size + padding);
-        dstY *= (size + padding);
+        glm::ivec2 dstpos;
+        Text_GetPos(atlas, i, dstpos);
+        dstpos *= (size + padding);
 
         for (int y = 0; y < bmp.rows; ++y) {
-            int ypos = y + dstY;
+            int ypos = y + dstpos.y;
             for (int x = 0; x < bmp.width; ++x) {
-                imgbuf[ypos * img.pitch + x + dstX] =
-                    bmp.buffer[y * bmp.pitch + x];
+                imgbuf[ypos * img.pitch + x + dstpos.x] = bmp.buffer[y * bmp.pitch + x];
             }
         }
     }
@@ -52,7 +49,15 @@ void Text_DestroyAtlas(GlyphAtlas& atlas) {
     Image_Free(atlas.atlas);
 }
 
-void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, uint16_t* x, uint16_t* y) {
-    *x = i % atlas.charsPerRow;
-    *y = i / atlas.charsPerRow;
+void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, glm::ivec2& pos) {
+    pos.x = i % atlas.charsPerRow;
+    pos.y = i / atlas.charsPerRow;
+}
+
+void Text_GetDrawPos(const GlyphAtlas& atlas, uint32_t i, glm::vec2& tl, glm::vec2& br) {
+    glm::ivec2 pos;
+    // assumes square image
+    Text_GetPos(atlas, i, pos);
+    tl = (glm::vec2) pos * (float) (atlas.size + atlas.padding) / (float) atlas.atlas.width;
+    br = tl + glm::vec2 {(float) atlas.size / (float) atlas.atlas.width};
 }

@@ -1,18 +1,21 @@
 #pragma once
 
 #include "image.hpp"
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include <glm/vec2.hpp>
 
 struct GlyphAtlas {
-    Image atlas;
-    int padding;
-    int size;
-    uint32_t first;
-    uint32_t num;
-    int charsPerRow;
+    Image atlas {};
+    int padding {};
+    int size {};
+    uint32_t first {};
+    uint32_t num {};
+    int charsPerRow {};
 };
 
 GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t num, int padding = 0);
 void Text_DestroyAtlas(GlyphAtlas& atlas);
-void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, uint16_t* x, uint16_t* y);
+void Text_GetPos(const GlyphAtlas& atlas, uint32_t i, glm::ivec2& pos);
+void Text_GetDrawPos(const GlyphAtlas& atlas, uint32_t i, glm::vec2& tl, glm::vec2& br);

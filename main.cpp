@@ -62,10 +62,26 @@ int main(int, char**) {
     FT_Face face;
     FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
 
-    GlyphAtlas atlas = Text_CreateAtlas(face, 16, 0x00, 0xff);
+    GlyphAtlas atlas = Text_CreateAtlas(face, 32, 0x00, 0xff);
 
-    Text_DestroyAtlas(atlas);
-    FT_Done_Face(face);
+    glm::vec2 tl, br;
+    Text_GetDrawPos(atlas, 1, tl, br);
+
+
+    Primative quad = GL_CreateQuad();
+
+    GLuint quadprog = GL_CreateProgram(
+        ReadEntireFile("../shaders/quad.vert").c_str(), 
+        ReadEntireFile("../shaders/quad.frag").c_str());
+    GLint quadprog_image = glGetUniformLocation(quadprog, "u_image");
+    GLint quadprog_tl = glGetUniformLocation(quadprog, "u_tl");
+    GLint quadprog_br = glGetUniformLocation(quadprog, "u_br");
+    GLint quadprog_pos = glGetUniformLocation(quadprog, "u_pos");
+    GLint quadprog_size = glGetUniformLocation(quadprog, "u_size");
+    GLint quadprog_res = glGetUniformLocation(quadprog, "u_res");
+
+    GLuint tex = GL_CreateTexture(atlas.atlas);
+    GL_TextureFilter(tex, GL_NEAREST, GL_NEAREST);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
@@ -73,6 +89,21 @@ int main(int, char**) {
         for (SDL_Event e; SDL_PollEvent(&e); HandleSDLEvent(state, e));
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glm::vec2 tl, br;
+        Text_GetDrawPos(atlas, 'W', tl, br);
+
+        glUseProgram(quadprog);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        GL_PassUniform(quadprog_image, 0);
+        GL_PassUniform(quadprog_tl, tl);
+        GL_PassUniform(quadprog_br, br);
+        GL_PassUniform(quadprog_pos, 0.0f, 0.0f);
+        GL_PassUniform(quadprog_size, 64.0f, 64.0f);
+        GL_PassUniform(quadprog_res, 1280.0f, 720.0f);
+        glBindVertexArray(quad.vao);
+        quad.Draw();
 
         SDL_GL_SwapWindow(window);
 
@@ -84,7 +115,11 @@ int main(int, char**) {
         }
     }
 
+    glDeleteProgram(quadprog);
+    GL_DestroyPrimative(quad);
     FT_Done_FreeType(freetype);
+    Text_DestroyAtlas(atlas);
+    FT_Done_Face(face);
 
     SDL_DestroyWindow(window);
     SDL_Quit();

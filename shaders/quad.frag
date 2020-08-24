@@ -7,5 +7,7 @@ out vec4 out_color;
 uniform sampler2D u_image;
 
 void main() {
-    out_color = vec4(texture(u_image, pass_coord).rgb, 1.0);
+    float col = texture(u_image, pass_coord).r;
+    if (col == 0.0) discard;
+    out_color = vec4(vec3(col), 1.0);
 }
