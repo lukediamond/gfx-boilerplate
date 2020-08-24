@@ -7,12 +7,16 @@
 
 inline int UTF8_PrefixLen(char x) {
     if (x >= 0) return 1;
+    #ifdef __builtin_clz
+    return __builtin_clz((uint32_t) ~x << 24);
+    #else
     int n = 0;
     while (x < 0) {
         x <<= 1;
         ++n;
     }
     return n;
+    #endif
 }
 
 inline uint32_t UTF8_NextCodePoint(const char* buf, size_t* i, size_t len) {

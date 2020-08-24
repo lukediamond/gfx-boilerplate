@@ -50,8 +50,6 @@ GlyphAtlas Text_CreateAtlas(FT_Face& face, int size, uint32_t first, uint32_t nu
         }
     }
 
-    Image_WriteBMP(atlas.atlas, "out.bmp");
-
     return atlas;
 }
 
