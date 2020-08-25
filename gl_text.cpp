@@ -150,8 +150,8 @@ GL_TextRenderer GL_CreateTextRenderer() {
     GL_TextRenderer r;
 
     r.atlasprog = GL_CreateProgram(
-        ReadEntireFile("../shaders/quad.vert").c_str(),
-        ReadEntireFile("../shaders/quad.frag").c_str());
+        ReadEntireFile("../shaders/text.vert").c_str(),
+        ReadEntireFile("../shaders/text.frag").c_str());
     r.atlasprog_image = glGetUniformLocation(r.atlasprog, "u_image");
     r.atlasprog_tl = glGetUniformLocation(r.atlasprog, "u_tl");
     r.atlasprog_br = glGetUniformLocation(r.atlasprog, "u_br");

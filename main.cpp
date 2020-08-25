@@ -44,29 +44,18 @@ int main(int, char**) {
     SDL_GLContext glctx = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, glctx);
     glewInit();
-    SDL_GL_SetSwapInterval(0);
+    SDL_GL_SetSwapInterval(1);
 
     ProgramState state;
 
-    FT_Library freetype;
-    FT_Init_FreeType(&freetype);
+    GLuint prog = GL_CreateProgram(
+        ReadEntireFile("../shaders/quad.vert").c_str(),
+        ReadEntireFile("../shaders/circle.frag").c_str());
+    GLuint prog_pos = glGetUniformLocation(prog, "u_pos");
+    GLuint prog_size = glGetUniformLocation(prog, "u_size");
+    GLuint prog_res = glGetUniformLocation(prog, "u_res");
 
-    FT_Face face;
-    FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
-
-    GL_FontContext fontctx = GL_CreateFontContext(face, 24);
-
-    std::string str = u8"test";
-
-    GL_TextLayoutInfo layout {};
-    layout.breakWord = false;
-    layout.width = 600.0f;
-    layout.height = 400.0f;
-    layout.align = GL_TextLayoutInfo::A_Left;
-    auto gstr = GL_GetGlyphString(fontctx, str, layout);
-
-    GL_TextRenderer tr = GL_CreateTextRenderer();
-    tr.res = {1280.0f, 720.0f};
+    Primative quad = GL_CreateQuad();
 
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();
@@ -74,6 +63,14 @@ int main(int, char**) {
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(prog);
+        glBindVertexArray(quad.vao);
+
+        GL_PassUniform(prog_pos, glm::vec2 {0.0f, 0.0f});
+        GL_PassUniform(prog_size, glm::vec2 {256.0f, 256.0f});
+        GL_PassUniform(prog_res, glm::vec2 {1280.0f, 720.0f});
+        quad.Draw();
 
         SDL_GL_SwapWindow(window);
 
@@ -85,10 +82,8 @@ int main(int, char**) {
         }
     }
 
-    GL_DestroyTextRenderer(tr);
-    GL_DestroyFontContext(fontctx);
-    FT_Done_Face(face);
-    FT_Done_FreeType(freetype);
+    GL_DestroyPrimative(quad);
+    glDeleteProgram(prog);
 
     SDL_DestroyWindow(window);
     SDL_Quit();
