@@ -56,7 +56,7 @@ int main(int, char**) {
 
     GL_FontContext fontctx = GL_CreateFontContext(face, 32);
 
-    std::string str = u8"text";
+    std::string str = u8"test";
     GL_TextLayout layout {};
     layout.breakWord = false;
     layout.width = 800;

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.0)
 
-set(CMAKE_CXX_FLAGS "--std=c++1z -fno-exceptions -m64")
+set(CMAKE_CXX_FLAGS "--std=c++1z -fno-exceptions -m64 -O3")
 
 add_executable(runtime
     main.cpp

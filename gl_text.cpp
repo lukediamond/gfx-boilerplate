@@ -71,12 +71,13 @@ std::vector<GL_Glyph> GL_GetGlyphString(
         GL_Glyph g = GL_GetGlyph(ctx, codept);
 
         // check for newline or overflow
+        bool overflow = (layout.width > 0.0f && pos.x > layout.width);
         if (codept == '\n' 
-        || (layout.width > 0.0f && pos.x > layout.width)
+        || overflow
         ) {
             // if the current word spans the entire line, don't break unless breakWord is set
             if (layout.breakWord || i - wordstart < linecount) {
-                if (!layout.breakWord) {
+                if (!layout.breakWord && overflow) {
                     glyphs.resize(wordstart);
                     i = wordstart;
                 }
