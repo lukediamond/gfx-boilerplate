@@ -19,6 +19,7 @@ struct GL_Glyph {
     GLuint atlas;
     glm::vec2 tl;
     glm::vec2 br;
+    glm::vec2 pos;
     GlyphMetrics metrics;
 };
 
@@ -42,12 +43,27 @@ struct GL_TextRenderer {
     glm::vec2 res;
 };
 
+struct GL_TextLayout {
+    enum Align {
+        A_Left,
+        A_Center,
+        A_Right,
+        A_Justify
+    };
+
+    float width = 150;
+    Align align = A_Left;
+    bool breakWord = false;
+};
+
 GL_GlyphAtlas GL_CreateGlyphAtlas(FT_Face face, int size, uint32_t codept);
 void GL_DestroyGlyphAtlas(GL_GlyphAtlas& atlas);
 
 GL_FontContext GL_CreateFontContext(FT_Face face, int size);
 GL_Glyph GL_GetGlyph(GL_FontContext& ctx, uint32_t codept);
-std::vector<GL_Glyph> GL_GetGlyphString(GL_FontContext& ctx, std::string str);
+std::vector<GL_Glyph> GL_GetGlyphString(
+    GL_FontContext& ctx, std::string str, 
+    const GL_TextLayout& layout = {});
 void GL_DestroyFontContext(GL_FontContext& ctx);
 
 GL_TextRenderer GL_CreateTextRenderer();

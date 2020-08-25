@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstddef>
+#include <string>
 
 #define UTF8_INVALID_CHAR ((uint32_t) 0xffffffffffffffff)
 
@@ -34,4 +35,16 @@ inline uint32_t UTF8_NextCodePoint(const char* buf, size_t* i, size_t len) {
     }
     *i += preflen;
     return codept;
+}
+
+inline std::u32string UTF8_ToU32(const char* buf, size_t len) {
+    std::u32string str;
+    size_t i = 0;
+
+    while (i < len) {
+        uint32_t codept = UTF8_NextCodePoint(buf, &i, len);
+        if (codept == UTF8_INVALID_CHAR) continue;
+        str += codept;
+    }
+    return str;
 }

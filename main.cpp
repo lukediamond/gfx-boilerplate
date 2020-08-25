@@ -56,8 +56,11 @@ int main(int, char**) {
 
     GL_FontContext fontctx = GL_CreateFontContext(face, 32);
 
-    std::string str = u8" ᛖᚴ ᚷᛖᛏ ᛖᛏᛁ ᚧ ᚷᛚᛖᚱ ᛘᚾ ᚦᛖᛋᛋ ";
-    auto gstr = GL_GetGlyphString(fontctx, str);
+    std::string str = u8"test";
+    GL_TextLayout layout {};
+    layout.breakWord = true;
+    layout.width = 200;
+    auto gstr = GL_GetGlyphString(fontctx, str, layout);
 
     GL_TextRenderer tr = GL_CreateTextRenderer();
     tr.res = {1280.0f, 720.0f};

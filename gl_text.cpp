@@ -45,20 +45,60 @@ GL_Glyph GL_GetGlyph(GL_FontContext& ctx, uint32_t codept) {
     const auto& atlas = ctx.atlases[atlasidx];
     uint32_t codeidx = codept - atlas.atlas.first;
     glyph.atlas = atlas.tex;
+    glyph.pos = glm::vec2 {0.0f};
     Text_GetDrawPos(atlas.atlas, codeidx, glyph.tl, glyph.br);
     glyph.metrics = atlas.atlas.metrics[codeidx];
 
     return glyph;
 }
 
-std::vector<GL_Glyph> GL_GetGlyphString(GL_FontContext& ctx, std::string str) {
+std::vector<GL_Glyph> GL_GetGlyphString(
+    GL_FontContext& ctx, std::string str, 
+    const GL_TextLayout& layout
+) {
     std::vector<GL_Glyph> glyphs;
-    size_t i = 0;
-    while (i < str.size()) {
-        auto codept = UTF8_NextCodePoint(str.data(), &i, str.size());
-        if (codept == UTF8_INVALID_CHAR) continue;
-        glyphs.push_back(GL_GetGlyph(ctx, codept));
+    glm::vec2 pos = {0.0f, 0.0f};
+
+    auto str32 = UTF8_ToU32(str.data(), str.size());
+    size_t wordstart = 0;
+    bool lastws = false;
+
+    int linecount = 0;
+    for (size_t i = 0; i < str32.size(); ++i) {
+        auto codept = str32[i];
+
+        GL_Glyph g = GL_GetGlyph(ctx, codept);
+
+        // check for newline or overflow
+        if (codept == '\n' 
+        || (layout.width > 0.0f && pos.x > layout.width)
+        ) {
+            // if the current word spans the entire line, don't break unless breakWord is set
+            if (layout.breakWord || i - wordstart < linecount) {
+                if (!layout.breakWord) {
+                    glyphs.resize(wordstart);
+                    i = wordstart;
+                }
+                pos.x = 0.0f;
+                pos.y += g.metrics.advanceY;
+                linecount = 0;
+                continue;
+            }
+        }
+        if (codept == '\r') continue;
+        g.pos = pos;
+        pos.x += g.metrics.advanceX;
+        ++linecount;
+        glyphs.push_back(g);
+
+        if (codept == ' ' || codept == '\n' || codept == '\t') {
+            lastws = true;
+        } else {
+            if (lastws) wordstart = i - 1;
+            lastws = false;
+        }
     }
+
     return glyphs;
 }
 
@@ -110,14 +150,14 @@ void GL_DrawString(GL_TextRenderer& r, std::vector<GL_Glyph>& glyphs, glm::vec2 
     GL_PassUniform(r.atlasprog_image, 0);
 
     for (const auto& g : glyphs) {
+        glm::vec2 bearing {g.metrics.bearingX, size - g.metrics.bearingY};
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, g.atlas);
         GL_PassUniform(r.atlasprog_tl, g.tl);
         GL_PassUniform(r.atlasprog_br, g.br);
-        GL_PassUniform(r.atlasprog_pos, pos + glm::vec2 {g.metrics.bearingX, size - g.metrics.bearingY});
+        GL_PassUniform(r.atlasprog_pos, pos + g.pos + bearing);
         GL_PassUniform(r.atlasprog_size, glm::vec2 {size});
         r.quad.Draw();
-
-        pos.x += g.metrics.advanceX;
     }
 }
