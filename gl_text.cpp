@@ -57,6 +57,7 @@ std::vector<GL_Glyph> GL_GetGlyphString(
     const GL_TextLayout& layout
 ) {
     std::vector<GL_Glyph> glyphs;
+    std::vector<int> lines = {0};
     glm::vec2 pos = {0.0f, 0.0f};
 
     auto str32 = UTF8_ToU32(str.data(), str.size());
@@ -82,6 +83,8 @@ std::vector<GL_Glyph> GL_GetGlyphString(
                 pos.x = 0.0f;
                 pos.y += g.metrics.advanceY;
                 linecount = 0;
+
+                if (lines.back() != glyphs.size()) lines.push_back(glyphs.size());
                 continue;
             }
         }
@@ -96,6 +99,26 @@ std::vector<GL_Glyph> GL_GetGlyphString(
         } else {
             if (lastws) wordstart = i - 1;
             lastws = false;
+        }
+    }
+    if (lines.back() != glyphs.size()) lines.push_back(glyphs.size());
+
+    float fac = 0.0f;
+    switch (layout.align) {
+        case GL_TextLayout::A_Center:
+            fac = 0.5f;
+            break;
+        case GL_TextLayout::A_Right:
+            fac = 1.0f;
+            break;
+        default:
+            fac = 0.0f;
+            break;
+    }
+    for (int i = 1; i < lines.size(); ++i) {
+        float right = glyphs[lines[i] - 1].pos.x;
+        for (int j = lines[i - 1]; j < lines[i]; ++j) {
+            glyphs[j].pos.x += fac * fmax(0.0f, layout.width - right);
         }
     }
 

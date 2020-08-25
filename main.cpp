@@ -56,10 +56,11 @@ int main(int, char**) {
 
     GL_FontContext fontctx = GL_CreateFontContext(face, 32);
 
-    std::string str = u8"test";
+    std::string str = u8"text";
     GL_TextLayout layout {};
-    layout.breakWord = true;
-    layout.width = 200;
+    layout.breakWord = false;
+    layout.width = 800;
+    layout.align = GL_TextLayout::A_Center;
     auto gstr = GL_GetGlyphString(fontctx, str, layout);
 
     GL_TextRenderer tr = GL_CreateTextRenderer();

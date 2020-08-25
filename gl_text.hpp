@@ -48,7 +48,6 @@ struct GL_TextLayout {
         A_Left,
         A_Center,
         A_Right,
-        A_Justify
     };
 
     float width = 150;
