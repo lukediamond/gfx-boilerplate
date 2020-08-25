@@ -52,13 +52,15 @@ GL_Glyph GL_GetGlyph(GL_FontContext& ctx, uint32_t codept) {
     return glyph;
 }
 
-std::vector<GL_Glyph> GL_GetGlyphString(
-    GL_FontContext& ctx, std::string str, 
-    const GL_TextLayout& layout
+GL_TextLayout GL_GetGlyphString(
+    GL_FontContext& ctx, std::string str,
+    const GL_TextLayoutInfo& info
 ) {
-    std::vector<GL_Glyph> glyphs;
+    GL_TextLayout layout;
     std::vector<int> lines = {0};
     glm::vec2 pos = {0.0f, 0.0f};
+
+    layout.viewport = {info.width, info.height};
 
     auto str32 = UTF8_ToU32(str.data(), str.size());
     size_t wordstart = 0;
@@ -71,21 +73,20 @@ std::vector<GL_Glyph> GL_GetGlyphString(
         GL_Glyph g = GL_GetGlyph(ctx, codept);
 
         // check for newline or overflow
-        bool overflow = (layout.width > 0.0f && pos.x > layout.width);
-        if (codept == '\n' 
-        || overflow
-        ) {
+        bool overflow = (info.width > 0.0f && pos.x > info.width);
+        if (codept == '\n' || overflow) {
             // if the current word spans the entire line, don't break unless breakWord is set
-            if (layout.breakWord || i - wordstart < linecount) {
-                if (!layout.breakWord && overflow) {
-                    glyphs.resize(wordstart);
+            if (info.breakWord || i - wordstart < linecount) {
+                if (!info.breakWord && overflow) {
+                    layout.glyphs.resize(wordstart);
                     i = wordstart;
                 }
                 pos.x = 0.0f;
                 pos.y += g.metrics.advanceY;
                 linecount = 0;
 
-                if (lines.back() != glyphs.size()) lines.push_back(glyphs.size());
+                if (lines.back() != layout.glyphs.size()) 
+                    lines.push_back(layout.glyphs.size());
                 continue;
             }
         }
@@ -93,7 +94,7 @@ std::vector<GL_Glyph> GL_GetGlyphString(
         g.pos = pos;
         pos.x += g.metrics.advanceX;
         ++linecount;
-        glyphs.push_back(g);
+        layout.glyphs.push_back(g);
 
         if (codept == ' ' || codept == '\n' || codept == '\t') {
             lastws = true;
@@ -102,14 +103,15 @@ std::vector<GL_Glyph> GL_GetGlyphString(
             lastws = false;
         }
     }
-    if (lines.back() != glyphs.size()) lines.push_back(glyphs.size());
+    if (lines.back() != layout.glyphs.size()) 
+        lines.push_back(layout.glyphs.size());
 
     float fac = 0.0f;
-    switch (layout.align) {
-        case GL_TextLayout::A_Center:
+    switch (info.align) {
+        case GL_TextLayoutInfo::A_Center:
             fac = 0.5f;
             break;
-        case GL_TextLayout::A_Right:
+        case GL_TextLayoutInfo::A_Right:
             fac = 1.0f;
             break;
         default:
@@ -117,13 +119,13 @@ std::vector<GL_Glyph> GL_GetGlyphString(
             break;
     }
     for (int i = 1; i < lines.size(); ++i) {
-        float right = glyphs[lines[i] - 1].pos.x;
+        float right = layout.glyphs[lines[i] - 1].pos.x;
         for (int j = lines[i - 1]; j < lines[i]; ++j) {
-            glyphs[j].pos.x += fac * fmax(0.0f, layout.width - right);
+            layout.glyphs[j].pos.x += fac * fmax(0.0f, info.width - right);
         }
     }
 
-    return glyphs;
+    return layout;
 }
 
 GL_FontContext GL_CreateFontContext(FT_Face face, int size) {
@@ -166,22 +168,26 @@ void GL_DestroyTextRenderer(GL_TextRenderer& r) {
     GL_DestroyPrimative(r.quad);
 }
 
-void GL_DrawString(GL_TextRenderer& r, std::vector<GL_Glyph>& glyphs, glm::vec2 pos, float size) {
+void GL_DrawString(GL_TextRenderer& r, const GL_TextLayout& layout, glm::vec2 pos, glm::vec2 offset, float size) {
     glUseProgram(r.atlasprog);
     glBindVertexArray(r.quad.vao);
 
     GL_PassUniform(r.atlasprog_res, r.res);
     GL_PassUniform(r.atlasprog_image, 0);
-
-    for (const auto& g : glyphs) {
+    int drawn = 0;
+    for (const auto& g : layout.glyphs) {
         glm::vec2 bearing {g.metrics.bearingX, size - g.metrics.bearingY};
-
+        if (g.pos.y + offset.y + g.metrics.advanceY < 0.0f) continue;
+        if (layout.viewport.y > 0.0f && g.pos.y + offset.y > layout.viewport.y) {
+            break;
+        }
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, g.atlas);
         GL_PassUniform(r.atlasprog_tl, g.tl);
         GL_PassUniform(r.atlasprog_br, g.br);
-        GL_PassUniform(r.atlasprog_pos, pos + g.pos + bearing);
+        GL_PassUniform(r.atlasprog_pos, pos + offset + g.pos + bearing);
         GL_PassUniform(r.atlasprog_size, glm::vec2 {size});
         r.quad.Draw();
+        ++drawn;
     }
 }

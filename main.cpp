@@ -44,7 +44,7 @@ int main(int, char**) {
     SDL_GLContext glctx = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, glctx);
     glewInit();
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(0);
 
     ProgramState state;
 
@@ -54,26 +54,26 @@ int main(int, char**) {
     FT_Face face;
     FT_New_Face(freetype, "../contrib/OpenSans/OpenSans-Regular.ttf", 0, &face);
 
-    GL_FontContext fontctx = GL_CreateFontContext(face, 32);
+    GL_FontContext fontctx = GL_CreateFontContext(face, 24);
 
     std::string str = u8"test";
-    GL_TextLayout layout {};
+
+    GL_TextLayoutInfo layout {};
     layout.breakWord = false;
-    layout.width = 800;
-    layout.align = GL_TextLayout::A_Center;
+    layout.width = 600.0f;
+    layout.height = 400.0f;
+    layout.align = GL_TextLayoutInfo::A_Left;
     auto gstr = GL_GetGlyphString(fontctx, str, layout);
 
     GL_TextRenderer tr = GL_CreateTextRenderer();
     tr.res = {1280.0f, 720.0f};
 
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     while (state.running) {
         auto start = std::chrono::high_resolution_clock::now();
         for (SDL_Event e; SDL_PollEvent(&e); HandleSDLEvent(state, e));
 
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        GL_DrawString(tr, gstr, {0.0f, 0.0f}, 32.0f);
 
         SDL_GL_SwapWindow(window);
 
